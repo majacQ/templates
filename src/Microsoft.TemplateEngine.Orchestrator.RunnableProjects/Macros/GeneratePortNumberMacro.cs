@@ -109,7 +109,13 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros
                 fallback = fallbackToken.ToInt32();
             }
 
-            IMacroConfig realConfig = new GeneratePortNumberConfig(deferredConfig.VariableName, deferredConfig.DataType, fallback, low, high);
+            bool sequential = false;
+            if (deferredConfig.Parameters.TryGetValue("sequential", out JToken sequentialToken) && sequentialToken.Type == JTokenType.String)
+            {
+                sequential = sequentialToken.ToBool();
+            }
+
+            IMacroConfig realConfig = new GeneratePortNumberConfig(deferredConfig.VariableName, deferredConfig.DataType, fallback, low, high, sequential);
             return realConfig;
         }
     }

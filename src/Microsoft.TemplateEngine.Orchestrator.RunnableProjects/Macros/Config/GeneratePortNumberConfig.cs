@@ -24,12 +24,19 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros.Config
                     6669, // Alternate IRC [Apple addition]
         };
 
-        internal GeneratePortNumberConfig(string variableName, string dataType, int fallback, int low, int high)
+        internal GeneratePortNumberConfig(string variableName, string dataType, int fallback, int low, int high, bool sequential = false)
         {
             DataType = dataType;
             VariableName = variableName;
-            Random rand = new Random();
-            int startPort = rand.Next(low, high);
+
+            int startPort = low;
+            int endPort = high;
+
+            if (!sequential)
+            {
+                Random rand = new Random();
+                startPort = rand.Next(low, high);
+            }
 
             for (int testPort = startPort; testPort <= high; testPort++)
             {
@@ -41,13 +48,18 @@ namespace Microsoft.TemplateEngine.Orchestrator.RunnableProjects.Macros.Config
                 }
             }
 
-            for (int testPort = low; testPort < startPort; testPort++)
+            if (!sequential)
             {
-                if (TryAllocatePort(testPort, out Socket testSocket))
+                // A free port couldn't be found from random start so search from low to startPort
+                endPort = startPort;
+                for (int testPort = low; testPort < endPort; testPort++)
                 {
-                    Socket = testSocket;
-                    Port = ((IPEndPoint)Socket.LocalEndPoint).Port;
-                    return;
+                    if (TryAllocatePort(testPort, out Socket testSocket))
+                    {
+                        Socket = testSocket;
+                        Port = ((IPEndPoint)Socket.LocalEndPoint).Port;
+                        return;
+                    }
                 }
             }
 
